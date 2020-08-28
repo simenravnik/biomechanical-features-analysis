@@ -31,6 +31,20 @@ def pairwise_relationship(X):
     plt.show()
 
 
+def class_count_plot(data_2c, data_3c):
+    """
+    Plotting the count of dataset class for both data sets
+    """
+
+    # plotting dataset with normal/abnormal class
+    sns.countplot(x="class", data=data_2c, palette="Set3")
+    plt.show()
+
+    # plotting dataset with hernia/spondylolisthesis/normal class
+    sns.countplot(x="class", data=data_3c, palette="Set3")
+    plt.show()
+
+
 if __name__ == '__main__':
 
     # load data
@@ -42,4 +56,7 @@ if __name__ == '__main__':
 
     # plotting pairwise relationships
     pairwise_relationship(data_3c)
+
+    # plotting class count
+    class_count_plot(data_2c, data_3c)
 

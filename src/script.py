@@ -1,6 +1,8 @@
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import scipy.cluster.hierarchy as shc
+from sklearn.cluster import AgglomerativeClustering
 
 
 def load_data():
@@ -45,6 +47,26 @@ def class_count_plot(data_2c, data_3c):
     plt.show()
 
 
+def hierarchical_clustering(data_3c):
+
+    # convert pandas data frame to numpy array
+    data_matrix = data_3c.to_numpy()
+
+    # remove class column from the data
+    data = data_matrix[:, 0:-1]
+    class_column = data_3c.iloc[:, -1]
+
+    # plotting dendogram of hierarchical clustering with ward linkage
+    shc.dendrogram(shc.linkage(data, method='ward'))
+    plt.show()
+
+    # hierarchical clustering for plotting scatter plot
+    cluster = AgglomerativeClustering(n_clusters=2, affinity='euclidean', linkage='ward')
+    cluster.fit_predict(data)
+    plt.scatter(data[:, 1], data[:, 4], c=cluster.labels_, cmap='rainbow')
+    plt.show()
+
+
 if __name__ == '__main__':
 
     # load data
@@ -60,3 +82,4 @@ if __name__ == '__main__':
     # plotting class count
     class_count_plot(data_2c, data_3c)
 
+    hierarchical_clustering(data_3c)

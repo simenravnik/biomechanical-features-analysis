@@ -146,7 +146,7 @@ def plot_pca(n, pca_matrix, horizontal_angle=None, vertical_angle=None):
     ax.set_ylabel('Principal Component 2')
 
     # defining colors for each or the target values
-    targets = ['Hernia', 'Spondylolisthesis', 'Normal']
+    targets = list(set(pca_matrix['class']))    # unique elements of class column
     colors = ['r', 'g', 'b']
 
     # for each of the target values ilocate indexes and

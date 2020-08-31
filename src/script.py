@@ -71,6 +71,12 @@ def hierarchical_clustering(data_3c):
 
 
 def calculate_pca(data):
+    """
+    Calculates PCA for both two and three principal components along with plotting them.
+    Plus visualise cumulative explained variance ration depending on number of components.
+
+    :param data: all data from the data set
+    """
 
     # separating the features from the target value
     x = data.iloc[:, 0:-1].values
@@ -79,22 +85,65 @@ def calculate_pca(data):
     # centering the data (standardizing the features)
     x = StandardScaler().fit_transform(x)
 
+    # performing two components pca
+    pca_matrix_two_components = n_components_pca(2, data, x, ['PC1', 'PC2'])
+    plot_pca(2, pca_matrix_two_components)
+
+    # performing three components pca
+    pca_matrix_three_components = n_components_pca(3, data, x, ['PC1', 'PC2', 'PC3'])
+    for vertical_angle in range(0, 91, 45):
+        for horizontal_angle in range(0, 91, 45):
+            plot_pca(3, pca_matrix_three_components, horizontal_angle=horizontal_angle, vertical_angle=vertical_angle)
+
+    # displaying cumulative explained variance ratio depending on number of components
+    cumulative_explained_variance_ratio(x)
+
+
+def n_components_pca(n, data, x, columns):
+    """
+    :param n: number of components
+    :param data: all data from the data set
+    :param x: centered (standardized) data
+    :param columns: list of components names (must be the size of n)
+    :return: concatenated matrix of principal components and target value
+    """
     # performing PCA
-    pca = PCA(n_components=2)                           # two components
-    principal_components = pca.fit_transform(x)         # fitting the data
+    pca = PCA(n_components=n)  # two components
+    principal_components = pca.fit_transform(x)  # fitting the data
 
     # transforming the data matrix into pd data frame
-    principal_df = pd.DataFrame(data=principal_components, columns=['PC1', 'PC2'])
+    principal_df = pd.DataFrame(data=principal_components, columns=columns)
 
     # concatenating the target values to the principal component data frame
     final_df = pd.concat([principal_df, data['class']], axis=1)
 
-    # plotting the principal components
-    fig = plt.figure(figsize=(8, 8))
-    ax = fig.add_subplot(1, 1, 1)
-    ax.set_xlabel('Principal Component 1', fontsize=15)
-    ax.set_ylabel('Principal Component 2', fontsize=15)
-    ax.set_title('2 component PCA', fontsize=20)
+    # printing explained variance ratio
+    print(pca.explained_variance_ratio_)
+
+    return final_df
+
+
+def plot_pca(n, pca_matrix, horizontal_angle=None, vertical_angle=None):
+    """
+    :param n: number of components
+    :param pca_matrix: concatenated matrix of principal components and target value
+    :param horizontal_angle: is an optional parameter which defines horizontal angle of the figure
+    :param vertical_angle: is an optional parameter which defines vertical angle of the figure
+    """
+    plt.figure(figsize=(8, 8))
+
+    # adding figure metadata depending on number of components
+    ax = None
+    if n == 2:
+        ax = plt.axes()
+        ax.set_title('2 component PCA', fontsize=20)
+    elif n == 3:
+        ax = plt.axes(projection='3d')
+        ax.set_title('3 component PCA', fontsize=20)
+        ax.set_zlabel('Principal Component 3')
+
+    ax.set_xlabel('Principal Component 1')
+    ax.set_ylabel('Principal Component 2')
 
     # defining colors for each or the target values
     targets = ['Hernia', 'Spondylolisthesis', 'Normal']
@@ -103,26 +152,40 @@ def calculate_pca(data):
     # for each of the target values ilocate indexes and
     # plotting them on scatter plot with the defined color
     for target, color in zip(targets, colors):
+        idx_to_keep = pca_matrix['class'] == target
 
-        idx_to_keep = final_df['class'] == target
-
-        ax.scatter(final_df.loc[idx_to_keep, 'PC1']
-                   , final_df.loc[idx_to_keep, 'PC2']
-                   , c=color
-                   , s=50)
+        if n == 2:
+            ax.scatter(pca_matrix.loc[idx_to_keep, 'PC1'],
+                       pca_matrix.loc[idx_to_keep, 'PC2'],
+                       c=color, s=50)
+        elif n == 3:
+            ax.scatter(pca_matrix.loc[idx_to_keep, 'PC1'],
+                       pca_matrix.loc[idx_to_keep, 'PC2'],
+                       pca_matrix.loc[idx_to_keep, 'PC3'],
+                       c=color, s=50)
 
     ax.legend(targets)
     ax.grid()
 
-    plt.show()
+    # setting an angle of the figure
+    if horizontal_angle is not None and vertical_angle is not None:
+        ax.view_init(vertical_angle, horizontal_angle)
 
-    # displaying cumulative explained variance ratio depending on number of components
-    cumulative_explained_variance_ratio(x)
+    plt.show()
 
 
 def cumulative_explained_variance_ratio(x):
+    """
+    Plot explained variance depending on the number of principal components
+
+    :param x: centered (standardized) data
+    """
     pca = PCA().fit(x)
-    plt.plot(np.cumsum(pca.explained_variance_ratio_))
+
+    cumulative_ratio = np.zeros(len(pca.explained_variance_ratio_) + 1)
+    cumulative_ratio[1:] = np.cumsum(pca.explained_variance_ratio_)
+
+    plt.plot(cumulative_ratio)
     plt.xlabel('number of components')
     plt.ylabel('cumulative explained variance')
     plt.show()

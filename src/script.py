@@ -6,6 +6,7 @@ import scipy.cluster.hierarchy as shc
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
+from sklearn.ensemble import ExtraTreesClassifier
 
 
 def load_data():
@@ -191,6 +192,47 @@ def cumulative_explained_variance_ratio(x):
     plt.show()
 
 
+def calculate_features_importance(data):
+    """
+    :param data: all data from the dataset
+    """
+    # separating the features from the target value
+    x = data.iloc[:, 0:-1].values
+    target = data.iloc[:, -1].values
+
+    # calculating and plotting features importance
+    plot_features_importance(data, x, target)
+
+    # calculating features correlation and plotting heat map
+    plot_correlation_matrix(data)
+
+
+def plot_features_importance(data, x, y):
+    """
+    :param data: all data from the dataset
+    :param x: separated features from the target value
+    :param y: target value vector
+    """
+    # fitting a number of randomized decision trees (a.k.a. extra-trees) on various sub-samples of the dataset
+    model = ExtraTreesClassifier()
+    model.fit(x, y)
+
+    # plotting chart of feature importance
+    column_names = data.drop('class', axis=1).columns
+    feature_importance = pd.Series(model.feature_importances_, index=column_names)
+    feature_importance.plot(kind='barh')
+    plt.show()
+
+
+def plot_correlation_matrix(data):
+    """
+    :param data: all data from the dataset
+    """
+    plt.figure(figsize=(15, 10))
+    sns.heatmap(data.corr(), annot=True)
+    plt.show()
+
+
 if __name__ == '__main__':
 
     # load data
@@ -210,3 +252,7 @@ if __name__ == '__main__':
 
     # dimensionality reduction
     calculate_pca(data_3c)
+
+    # features importance and correlation
+    calculate_features_importance(data_3c)
+

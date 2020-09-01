@@ -11,7 +11,7 @@ from sklearn.ensemble import ExtraTreesClassifier
 
 def load_data():
     """
-    Reading data sets
+    Reading dataset
     :return: a pair of pandas data frames
     """
     data_2c = pd.read_csv('../data/dataset-2C.csv')
@@ -39,7 +39,7 @@ def pairwise_relationship(X):
 
 def class_count_plot(data_2c, data_3c):
     """
-    Plotting the count of dataset class for both data sets
+    Plotting the count of dataset class for both dataset
     """
 
     # plotting dataset with normal/abnormal class
@@ -76,7 +76,7 @@ def calculate_pca(data):
     Calculates PCA for both two and three principal components along with plotting them.
     Plus visualise cumulative explained variance ration depending on number of components.
 
-    :param data: all data from the data set
+    :param data: all data from the dataset
     """
 
     # separating the features from the target value
@@ -103,7 +103,7 @@ def calculate_pca(data):
 def n_components_pca(n, data, x, columns):
     """
     :param n: number of components
-    :param data: all data from the data set
+    :param data: all data from the dataset
     :param x: centered (standardized) data
     :param columns: list of components names (must be the size of n)
     :return: concatenated matrix of principal components and target value

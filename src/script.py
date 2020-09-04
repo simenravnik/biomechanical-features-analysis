@@ -7,6 +7,9 @@ from sklearn.cluster import AgglomerativeClustering
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.ensemble import ExtraTreesClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import KFold
 
 
 def load_data():
@@ -233,6 +236,91 @@ def plot_correlation_matrix(data):
     plt.show()
 
 
+def predict_knn(data):
+    """
+    Training and predicting with KNN model
+
+    :param data: all data from the dataset
+    """
+    # separating the features from the target value
+    x_data = data.iloc[:, 0:-1].values
+    target = data.iloc[:, -1].values
+
+    # normalizing the data (standardizing the features)
+    x = (x_data - np.min(x_data)) / (np.max(x_data) - np.min(x_data))
+
+    # splitting data into train and test sets
+    x_train, x_test, y_train, y_test = train_test_split(x, target)
+
+    # calculating optimal k for KNN prediction model
+    optimal_k = calculate_optimal_k(x_train, y_train)
+
+    # defining prediction model with k nearest neighbours
+    knn = KNeighborsClassifier(n_neighbors=optimal_k)
+
+    # fitting k-fold train data into the model
+    knn.fit(x_train, y_train)
+
+    # accuracy of KNN model
+    accuracy = knn.score(x_test, y_test)
+
+    print('Optimal k for KNN calculated: ', optimal_k)
+    print('KNN prediction model accuracy: ', accuracy)
+
+
+def calculate_optimal_k(x_train, y_train):
+    """
+    Calculating optimal K for KNN prediction model using k-fold cross validation
+
+    :param x_train: train data
+    :param y_train: train target
+    :return: best k for KNN algorithm
+    """
+    # to find the optimal K for KNN algorithm we perform K-fold cross validation for each K and take the mean value.
+    all_accuracies = []
+
+    for k in range(1, 51):
+
+        # defining prediction model with k nearest neighbours
+        knn = KNeighborsClassifier(n_neighbors=k)
+
+        # storing all K-fold accuracies of k
+        k_accuracies = []
+
+        # splitting train data again into K sets to perform cross validation
+        k_fold = KFold(n_splits=4)
+        for train_index, test_index in k_fold.split(x_train):
+            # K-fold train and test data set
+            kf_x_train, kf_x_test = x_train[train_index], x_train[test_index]
+            kf_y_train, kf_y_test = y_train[train_index], y_train[test_index]
+
+            # fitting k-fold train data into the model
+            knn.fit(kf_x_train, kf_y_train)
+
+            # accuracy of current split
+            accuracy = knn.score(kf_x_test, kf_y_test)
+
+            # adding current split accuracy to accuracies of current k
+            k_accuracies.append(accuracy)
+
+        # appending mean of current k accuracies to all accuracies
+        all_accuracies.append(np.mean(k_accuracies))
+
+    # plotting accuracy depending on k number
+    plt.figure(figsize=[14, 7])
+    plt.plot(np.arange(1, 51), all_accuracies)
+    plt.xticks(np.arange(1, 51))
+    plt.show()
+
+    # transforming list into numpy array
+    all_accuracies = np.array(all_accuracies)
+
+    # the best k for KNN algorithm is the index of max mean accuracies
+    optimal_k = np.argmax(all_accuracies) + 1      # +1 because we dont start with zero
+
+    return optimal_k
+
+
 if __name__ == '__main__':
 
     # load data
@@ -248,6 +336,7 @@ if __name__ == '__main__':
     # plotting class count
     class_count_plot(data_2c, data_3c)
 
+    # CLUSTERING
     hierarchical_clustering(data_3c)
 
     # dimensionality reduction
@@ -255,4 +344,8 @@ if __name__ == '__main__':
 
     # features importance and correlation
     calculate_features_importance(data_3c)
+
+    # PREDICTION
+    # K-nearest neighbours prediction
+    predict_knn(data_3c)
 

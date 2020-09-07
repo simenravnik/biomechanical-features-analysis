@@ -4,12 +4,14 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import scipy.cluster.hierarchy as shc
 from sklearn.cluster import AgglomerativeClustering
-from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import roc_auc_score, roc_curve, auc, plot_roc_curve
+from sklearn.preprocessing import StandardScaler, label_binarize
 from sklearn.decomposition import PCA
 from sklearn.ensemble import ExtraTreesClassifier
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, StratifiedKFold
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import KFold
+from sklearn.linear_model import LogisticRegression
 
 
 def load_data():
@@ -329,6 +331,29 @@ def calculate_optimal_k(x_train, y_train):
     optimal_k = np.argmax(all_accuracies) + 1      # +1 because we dont start with zero
 
     return optimal_k
+
+
+def predict_log_regression(data):
+    """
+    Training and predicting with logistic regression
+
+    :param data: all data from the dataset
+    """
+    # separating the features from the target value
+    x_data = data.iloc[:, 0:-1].values
+    target = data.iloc[:, -1].values
+
+    # normalizing the data (standardizing the features)
+    x = (x_data - np.min(x_data)) / (np.max(x_data) - np.min(x_data))
+
+    # splitting data into train and test sets
+    x_train, x_test, y_train, y_test = train_test_split(x, target, random_state=3)
+
+    model = LogisticRegression()
+    model.fit(x_train, y_train)
+
+    # printing accuracy of the model
+    print(model.score(x_test, y_test))
 
 
 if __name__ == '__main__':

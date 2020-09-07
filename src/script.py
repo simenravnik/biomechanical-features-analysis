@@ -278,6 +278,7 @@ def calculate_optimal_k(x_train, y_train):
     """
     # to find the optimal K for KNN algorithm we perform K-fold cross validation for each K and take the mean value.
     all_accuracies = []
+    all_train_accuracies = []
 
     for k in range(1, 51):
 
@@ -286,6 +287,7 @@ def calculate_optimal_k(x_train, y_train):
 
         # storing all K-fold accuracies of k
         k_accuracies = []
+        train_accuracies = []
 
         # splitting train data again into K sets to perform cross validation
         k_fold = KFold(n_splits=4)
@@ -299,17 +301,25 @@ def calculate_optimal_k(x_train, y_train):
 
             # accuracy of current split
             accuracy = knn.score(kf_x_test, kf_y_test)
+            train_accuracy = knn.score(kf_x_train, kf_y_train)    # train accuracy
 
             # adding current split accuracy to accuracies of current k
             k_accuracies.append(accuracy)
+            train_accuracies.append(train_accuracy)
 
         # appending mean of current k accuracies to all accuracies
         all_accuracies.append(np.mean(k_accuracies))
+        all_train_accuracies.append(np.mean(train_accuracies))
 
     # plotting accuracy depending on k number
     plt.figure(figsize=[14, 7])
-    plt.plot(np.arange(1, 51), all_accuracies)
+    plt.plot(np.arange(1, 51), all_accuracies, label="Testing accuracy")
+    plt.plot(np.arange(1, 51), all_train_accuracies, label="Training accuracy")
     plt.xticks(np.arange(1, 51))
+    plt.legend()
+    plt.title('KNN accuracy depending on number of neighbours')
+    plt.xlabel('Number of Neighbors')
+    plt.ylabel('Accuracy')
     plt.show()
 
     # transforming list into numpy array

@@ -88,8 +88,8 @@ def calculate_pca(data):
     x = data.iloc[:, 0:-1].values
     target = data.iloc[:, -1].values
 
-    # centering the data (standardizing the features)
-    x = StandardScaler().fit_transform(x)
+    # centering the data
+    x = x - np.mean(x, axis=0)
 
     # performing two components pca
     pca_matrix_two_components = n_components_pca(2, data, x, ['PC1', 'PC2'])
@@ -252,7 +252,7 @@ def predict_knn(data):
     x = (x_data - np.min(x_data)) / (np.max(x_data) - np.min(x_data))
 
     # splitting data into train and test sets
-    x_train, x_test, y_train, y_test = train_test_split(x, target)
+    x_train, x_test, y_train, y_test = train_test_split(x, target, random_state=42)
 
     # calculating optimal k for KNN prediction model
     optimal_k = calculate_optimal_k(x_train, y_train)
@@ -383,4 +383,5 @@ if __name__ == '__main__':
     # PREDICTION
     # K-nearest neighbours prediction
     predict_knn(data_3c)
+    predict_log_regression(data_3c)
 

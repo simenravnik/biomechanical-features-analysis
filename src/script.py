@@ -4,14 +4,18 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import scipy.cluster.hierarchy as shc
 from sklearn.cluster import AgglomerativeClustering
-from sklearn.metrics import roc_auc_score, roc_curve, auc, plot_roc_curve
-from sklearn.preprocessing import StandardScaler, label_binarize
+from sklearn.metrics import roc_curve, auc
+from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.ensemble import ExtraTreesClassifier
-from sklearn.model_selection import train_test_split, StratifiedKFold
+from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import KFold
 from sklearn.linear_model import LogisticRegression
+
+
+# constants
+RANDOM_STATE = 26
 
 
 def load_data():
@@ -252,7 +256,7 @@ def predict_knn(data):
     x = (x_data - np.min(x_data)) / (np.max(x_data) - np.min(x_data))
 
     # splitting data into train and test sets
-    x_train, x_test, y_train, y_test = train_test_split(x, target, random_state=42)
+    x_train, x_test, y_train, y_test = train_test_split(x, target, random_state=RANDOM_STATE)
 
     # calculating optimal k for KNN prediction model
     optimal_k = calculate_optimal_k(x_train, y_train)
@@ -343,21 +347,78 @@ def predict_log_regression(data):
     x_data = data.iloc[:, 0:-1].values
     target = data.iloc[:, -1].values
 
-    # normalizing the data (standardizing the features)
-    x = (x_data - np.min(x_data)) / (np.max(x_data) - np.min(x_data))
+    # standardizing features
+    x = StandardScaler().fit_transform(x_data)
 
     # splitting data into train and test sets
-    x_train, x_test, y_train, y_test = train_test_split(x, target, random_state=3)
+    x_train, x_test, y_train, y_test = train_test_split(x, target, random_state=RANDOM_STATE)
 
-    model = LogisticRegression()
-    model.fit(x_train, y_train)
+    classifier = LogisticRegression(multi_class='ovr')
+    classifier.fit(x_train, y_train)
 
     # printing accuracy of the model
-    print(model.score(x_test, y_test))
+    print(classifier.score(x_test, y_test))
+
+    # plotting ROC and calculating AUC
+    plot_roc(x_test, y_test, classifier, classifier.classes_)
+
+
+def plot_roc(x_test, y_test, classifier, classes):
+    """
+    Plot ROC curve and calculate AUC
+
+    :param x_test: testing data
+    :param y_test: testing target array
+    :param classifier: logistic regression classifier
+    :param classes: unique classes of target array
+    """
+
+    # predict confidence scores for each class
+    y_score = classifier.decision_function(x_test)
+
+    # Compute ROC curve and ROC area for each class
+    fpr = dict()
+    tpr = dict()
+    roc_auc = dict()
+
+    # binary representation of y_test for calculating micro average
+    binary_y_test = []
+
+    for idx, i in enumerate(classes):
+        # array of 0 and 1 when 1 represents positions where value is equal to current (i-th) target
+        target_arr = [1 if x == i else 0 for x in y_test]
+
+        # calculating roc and auc
+        fpr[idx], tpr[idx], _ = roc_curve(target_arr, y_score[:, idx])
+        roc_auc[idx] = auc(fpr[idx], tpr[idx])
+
+        # appending binary target array
+        binary_y_test.append(target_arr)
+
+    binary_y_test = np.array(binary_y_test)     # convert to numpy array
+
+    # compute micro-average ROC curve and ROC area
+    fpr["micro"], tpr["micro"], _ = roc_curve(binary_y_test.ravel(order='F'), y_score.ravel())
+    roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
+
+    # plot ROC curve
+    plt.figure()
+    plt.plot(fpr["micro"], tpr["micro"], label='micro-average ROC curve (area = {0:0.2f})'.format(roc_auc["micro"]))
+
+    for idx, i in enumerate(classes):
+        plt.plot(fpr[idx], tpr[idx], label='ROC curve of class {0} (area = {1:0.2f})'.format(i, roc_auc[idx]))
+
+    plt.plot([0, 1], [0, 1], 'k--')
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('Receiver operating characteristic')
+    plt.legend(loc="lower right")
+    plt.show()
 
 
 if __name__ == '__main__':
-
     # load data
     data_2c, data_3c = load_data()
 
@@ -381,7 +442,5 @@ if __name__ == '__main__':
     calculate_features_importance(data_3c)
 
     # PREDICTION
-    # K-nearest neighbours prediction
-    predict_knn(data_3c)
-    predict_log_regression(data_3c)
-
+    predict_knn(data_3c)    # K-nearest neighbours prediction
+    predict_log_regression(data_3c)     # logistic regression prediction

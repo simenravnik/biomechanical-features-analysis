@@ -15,7 +15,7 @@ from sklearn.linear_model import LogisticRegression
 
 
 # constants
-RANDOM_STATE = 26
+RANDOM_STATE = 15
 
 
 def load_data():
@@ -360,12 +360,37 @@ def predict_log_regression(data):
     print(classifier.score(x_test, y_test))
 
     # plotting ROC and calculating AUC
-    plot_roc(x_test, y_test, classifier, classifier.classes_)
+    if len(classifier.classes_) == 2:
+        plot_roc(x_test, y_test, classifier)    # two class roc plotting
+    else:
+        plot_roc_multiclass(x_test, y_test, classifier, classifier.classes_)    # multiclass ROC plotting
 
 
-def plot_roc(x_test, y_test, classifier, classes):
+def plot_roc(x_test, y_test, classifier):
     """
     Plot ROC curve and calculate AUC
+
+    :param x_test: testing data
+    :param y_test: testing target array
+    :param classifier: logistic regression classifier
+    """
+
+    y_pred_prob = classifier.predict_proba(x_test)[:, 1]
+    fpr, tpr, threshold = roc_curve(y_test, y_pred_prob, pos_label='Normal')
+
+    # Plot ROC curve
+    plt.plot([0, 1], [0, 1], 'k--')
+    plt.plot(fpr, tpr, label='ROC curve (area = {0:0.2f})'.format(auc(fpr, tpr)))
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('Receiver operating characteristic')
+    plt.legend(loc="lower right")
+    plt.show()
+
+
+def plot_roc_multiclass(x_test, y_test, classifier, classes):
+    """
+    Plot multiclass ROC curve and calculate AUC for each class
 
     :param x_test: testing data
     :param y_test: testing target array
@@ -413,7 +438,7 @@ def plot_roc(x_test, y_test, classifier, classes):
     plt.ylim([0.0, 1.05])
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
-    plt.title('Receiver operating characteristic')
+    plt.title('Multiclass Receiver operating characteristic')
     plt.legend(loc="lower right")
     plt.show()
 

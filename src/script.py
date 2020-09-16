@@ -12,7 +12,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import KFold
 from sklearn.linear_model import LogisticRegression
-
+from sklearn.tree import DecisionTreeClassifier
 
 # constants
 RANDOM_STATE = 15
@@ -443,6 +443,29 @@ def plot_roc_multiclass(x_test, y_test, classifier, classes):
     plt.show()
 
 
+def predict_decision_tree(data):
+    """
+    Training and predicting with decision tree
+
+    :param data: all data from the dataset
+    """
+    # separating the features from the target value
+    x_data = data.iloc[:, 0:-1].values
+    target = data.iloc[:, -1].values
+
+    # standardizing features
+    x = StandardScaler().fit_transform(x_data)
+
+    # splitting data into train and test sets
+    x_train, x_test, y_train, y_test = train_test_split(x, target, random_state=RANDOM_STATE)
+
+    classifier = DecisionTreeClassifier(max_depth=3)
+    classifier.fit(x_train, y_train)
+
+    # printing accuracy of the model on test data
+    print(classifier.score(x_test, y_test))
+
+
 if __name__ == '__main__':
     # load data
     data_2c, data_3c = load_data()
@@ -469,3 +492,4 @@ if __name__ == '__main__':
     # PREDICTION
     predict_knn(data_3c)    # K-nearest neighbours prediction
     predict_log_regression(data_3c)     # logistic regression prediction
+    predict_decision_tree(data_3c)      # decision tree prediction

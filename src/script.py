@@ -256,7 +256,7 @@ def predict_knn(data):
     x = (x_data - np.min(x_data)) / (np.max(x_data) - np.min(x_data))
 
     # splitting data into train and test sets
-    x_train, x_test, y_train, y_test = train_test_split(x, target, random_state=RANDOM_STATE)
+    x_train, x_test, y_train, y_test = train_test_split(x, target, random_state=RANDOM_STATE, test_size=0.2, shuffle=True)
 
     # calculating optimal k for KNN prediction model
     optimal_k = calculate_optimal_k(x_train, y_train)
@@ -266,6 +266,10 @@ def predict_knn(data):
 
     # fitting k-fold train data into the model
     knn.fit(x_train, y_train)
+
+    # calculating k-fold cross validation score
+    cross_val_accuracy = cross_validation_score(x_train, y_train, knn)
+    print('Cross validation mean accuracy: ', cross_val_accuracy)
 
     # accuracy of KNN model
     accuracy = knn.score(x_test, y_test)
@@ -351,10 +355,14 @@ def predict_log_regression(data):
     x = StandardScaler().fit_transform(x_data)
 
     # splitting data into train and test sets
-    x_train, x_test, y_train, y_test = train_test_split(x, target, random_state=RANDOM_STATE)
+    x_train, x_test, y_train, y_test = train_test_split(x, target, random_state=RANDOM_STATE, test_size=0.2, shuffle=True)
 
     classifier = LogisticRegression(multi_class='ovr')
     classifier.fit(x_train, y_train)
+
+    # calculating k-fold cross validation score
+    cross_val_accuracy = cross_validation_score(x_train, y_train, classifier)
+    print('Cross validation mean accuracy: ', cross_val_accuracy)
 
     # printing accuracy of the model
     print(classifier.score(x_test, y_test))
@@ -457,13 +465,49 @@ def predict_decision_tree(data):
     x = StandardScaler().fit_transform(x_data)
 
     # splitting data into train and test sets
-    x_train, x_test, y_train, y_test = train_test_split(x, target, random_state=RANDOM_STATE)
+    x_train, x_test, y_train, y_test = train_test_split(x, target, random_state=RANDOM_STATE, test_size=0.2, shuffle=True)
 
     classifier = DecisionTreeClassifier(max_depth=3)
     classifier.fit(x_train, y_train)
 
+    # calculating k-fold cross validation score
+    cross_val_accuracy = cross_validation_score(x_train, y_train, classifier)
+    print('Cross validation mean accuracy: ', cross_val_accuracy)
+
     # printing accuracy of the model on test data
     print(classifier.score(x_test, y_test))
+
+
+def cross_validation_score(x_train, y_train, classifier, num_splits=4):
+    """
+    Calculate k-fold cross validation on train data
+
+    :param x_train: train data which will be used in k-fold cross validation
+    :param y_train: train class data
+    :param classifier: prediction model
+    :param num_splits: number of splits of cross validation
+    :return: mean accuracy of k-fold cross validation
+    """
+    # storing all K-fold accuracies of k
+    accuracies = []
+    # splitting train data again into K sets to perform cross validation
+    k_fold = KFold(n_splits=num_splits)
+    for train_index, test_index in k_fold.split(x_train):
+        # K-fold train and test data set
+        kf_x_train, kf_x_test = x_train[train_index], x_train[test_index]
+        kf_y_train, kf_y_test = y_train[train_index], y_train[test_index]
+
+        # fitting k-fold train data into the model
+        classifier.fit(kf_x_train, kf_y_train)
+
+        # accuracy of current split
+        accuracy = classifier.score(kf_x_test, kf_y_test)
+
+        # adding current split accuracy to accuracies of current k
+        accuracies.append(accuracy)
+
+    # our accuracy is the mean value of k-fold scores
+    return np.mean(accuracies)
 
 
 if __name__ == '__main__':

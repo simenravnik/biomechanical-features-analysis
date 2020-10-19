@@ -514,15 +514,17 @@ if __name__ == '__main__':
     # load data
     data_2c, data_3c = load_data()
 
+    print(data_3c.describe())
+
+    # plotting class count
+    class_count_plot(data_2c, data_3c)
+
     # plotting distribution for each column in dataset
     for column in data_2c.drop('class', axis=1):
         column_distribution(data_2c[column])
 
     # plotting pairwise relationships
     pairwise_relationship(data_3c)
-
-    # plotting class count
-    class_count_plot(data_2c, data_3c)
 
     # CLUSTERING
     hierarchical_clustering(data_3c)
@@ -534,6 +536,6 @@ if __name__ == '__main__':
     calculate_features_importance(data_3c)
 
     # PREDICTION
-    predict_knn(data_3c)    # K-nearest neighbours prediction
+    predict_knn(data_3c)                # K-nearest neighbours prediction
     predict_log_regression(data_3c)     # logistic regression prediction
     predict_decision_tree(data_3c)      # decision tree prediction

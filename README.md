@@ -18,3 +18,84 @@ Determining pelvic orientation abnormalities is commonly still manual task and, 
 | sacral_slope             |     310 |  42.9538 | 13.4231 |  13.3669  |  33.3471  |  42.4049 |  52.6959 | 121.43   |
 | pelvic_radius            |     310 | 117.921  | 13.3174 |  70.0826  | 110.709   | 118.268  | 125.468  | 163.071  |
 | degree_spondylolisthesis |     310 |  26.2967 | 37.559  | -11.0582  |   1.60373 |  11.7679 |  41.2874 | 418.543  |
+
+### Class count
+
+![system schema](img/class_count.png)
+
+### Parameters distribution
+
+![system schema](img/parameters_distribution.png)
+
+### Pairwise relationship
+
+![system schema](img/pairwise_relationship.png)
+
+### Data correlation
+
+#### Feature importance
+
+![system schema](img/feature_importance.png)
+
+#### Heat map
+
+![system schema](img/heatmap.png)
+
+### Hierarchical clustering
+
+![system schema](img/dendrogram.png)
+
+### PCA
+
+#### Two components PCA
+
+![system schema](img/PCA_two_components.png)
+
+Explained variance per component:
+
+|   PC1       |        PC2  |      sum  |
+|-------------|-------------|-----------|
+|  0.70963571 |  0.13759529 | 0.847231  |
+
+#### Three components PCA
+
+![system schema](img/PCA_three_components.png)
+
+Explained variance per component:
+
+|   PC1       |        PC2  |      PC3   | sum        |
+|-------------|-------------|------------|------------|
+|  0.70963571 |  0.13759529 | 0.07521804 |  0.92244904|
+
+#### Explained variance ratio
+
+![system schema](img/PCA_explained_variance_ratio.png)
+
+### Prediction
+
+#### Knn
+
+![system schema](img/knn.png)
+
+```
+Optimal k for KNN calculated:  16
+
+Cross validation mean accuracy:                 0.842741935483871
+KNN prediction model accuracy (on test data):   0.8387096774193549
+```
+
+#### Logistic regression
+
+```
+Cross validation mean accuracy:                             0.842741935483871
+Log regression prediction model accuracy (on test data):    0.8548387096774194
+```
+
+![system schema](img/ROC.png)
+
+#### Decision tree
+
+```
+Cross validation mean accuracy:                            0.8024193548387097
+Decision tree prediction model accuracy (on test data):    0.8064516129032258
+```

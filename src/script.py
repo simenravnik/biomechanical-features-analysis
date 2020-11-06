@@ -69,12 +69,24 @@ def hierarchical_clustering(data_3c):
     data = data_matrix[:, 0:-1]
     class_column = data_3c.iloc[:, -1]
 
-    # plotting dendogram of hierarchical clustering with ward linkage
-    shc.dendrogram(shc.linkage(data, method='ward'))
+    plt.figure(figsize=(16, 8))
+    plt.title('Hierarchical Clustering Dendrogram', fontsize=20)
+    plt.ylabel('distance', fontsize=12)
+
+    # np array of target value
+    labels_arr = np.array(list(class_column))
+
+    # plotting dendrogram of hierarchical clustering with ward linkage
+    shc.dendrogram(
+        shc.linkage(data, method='ward'),
+        labels=labels_arr,
+        leaf_font_size=3,
+        color_threshold=220
+    )
     plt.show()
 
     # hierarchical clustering for plotting scatter plot
-    cluster = AgglomerativeClustering(n_clusters=2, affinity='euclidean', linkage='ward')
+    cluster = AgglomerativeClustering(n_clusters=7, affinity='euclidean', linkage='ward')
     cluster.fit_predict(data)
     plt.scatter(data[:, 1], data[:, 4], c=cluster.labels_, cmap='rainbow')
     plt.show()

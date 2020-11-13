@@ -15,7 +15,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 
 # constants
-RANDOM_STATE = 15
+RANDOM_STATE = 16
 
 
 def load_data():
@@ -69,9 +69,9 @@ def hierarchical_clustering(data_3c):
     data = data_matrix[:, 0:-1]
     class_column = data_3c.iloc[:, -1]
 
-    plt.figure(figsize=(16, 8))
+    plt.figure(figsize=(30, 40))
     plt.title('Hierarchical Clustering Dendrogram', fontsize=20)
-    plt.ylabel('distance', fontsize=12)
+    plt.xlabel('distance', fontsize=12)
 
     # np array of target value
     labels_arr = np.array(list(class_column))
@@ -80,10 +80,11 @@ def hierarchical_clustering(data_3c):
     shc.dendrogram(
         shc.linkage(data, method='ward'),
         labels=labels_arr,
-        leaf_font_size=3,
-        color_threshold=220
+        leaf_font_size=6,
+        color_threshold=220,
+        orientation='left'
     )
-    plt.show()
+    plt.savefig('../img/generated/hierarchical_clustering.png', format='png', bbox_inches='tight')
 
     # hierarchical clustering for plotting scatter plot
     cluster = AgglomerativeClustering(n_clusters=7, affinity='euclidean', linkage='ward')
@@ -162,10 +163,10 @@ def plot_pca(n, pca_matrix, horizontal_angle=None, vertical_angle=None):
     elif n == 3:
         ax = plt.axes(projection='3d')
         ax.set_title('3 component PCA', fontsize=20)
-        ax.set_zlabel('Principal Component 3')
+        ax.set_zlabel('PC3')
 
-    ax.set_xlabel('Principal Component 1')
-    ax.set_ylabel('Principal Component 2')
+    ax.set_xlabel('PC1')
+    ax.set_ylabel('PC2')
 
     # defining colors for each or the target values
     targets = list(set(pca_matrix['class']))    # unique elements of class column
@@ -207,10 +208,13 @@ def cumulative_explained_variance_ratio(x):
     cumulative_ratio = np.zeros(len(pca.explained_variance_ratio_) + 1)
     cumulative_ratio[1:] = np.cumsum(pca.explained_variance_ratio_)
 
-    plt.plot(cumulative_ratio)
-    plt.xlabel('number of components')
-    plt.ylabel('cumulative explained variance')
-    plt.show()
+    plt.figure(figsize=(14, 9))
+    plt.plot(cumulative_ratio, label="Cumulative explained variance")
+    plt.title('PCA explained variance ratio')
+    plt.xlabel('Number of components')
+    plt.ylabel('Explained variance')
+    plt.legend(loc="lower right")
+    plt.savefig('../img/generated/PCA_explained_variance_ratio.png', format='png', bbox_inches='tight')
 
 
 def calculate_features_importance(data):
@@ -280,7 +284,7 @@ def predict_knn(data):
     knn.fit(x_train, y_train)
 
     # calculating k-fold cross validation score
-    cross_val_accuracy = cross_validation_score(x_train, y_train, knn)
+    cross_val_accuracy = cross_validation_score(x_train, y_train, KNeighborsClassifier(n_neighbors=optimal_k))
     print('Cross validation mean accuracy: ', cross_val_accuracy)
 
     # accuracy of KNN model
@@ -334,7 +338,7 @@ def calculate_optimal_k(x_train, y_train):
         all_train_accuracies.append(np.mean(train_accuracies))
 
     # plotting accuracy depending on k number
-    plt.figure(figsize=[14, 7])
+    plt.figure(figsize=[16, 9])
     plt.plot(np.arange(1, 51), all_accuracies, label="Testing accuracy")
     plt.plot(np.arange(1, 51), all_train_accuracies, label="Training accuracy")
     plt.xticks(np.arange(1, 51))
@@ -342,7 +346,7 @@ def calculate_optimal_k(x_train, y_train):
     plt.title('KNN accuracy depending on number of neighbours')
     plt.xlabel('Number of Neighbors')
     plt.ylabel('Accuracy')
-    plt.show()
+    plt.savefig('../img/generated/knn.png', format='png', bbox_inches='tight')
 
     # transforming list into numpy array
     all_accuracies = np.array(all_accuracies)

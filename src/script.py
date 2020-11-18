@@ -4,7 +4,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import scipy.cluster.hierarchy as shc
 from sklearn.cluster import AgglomerativeClustering
-from sklearn.metrics import roc_curve, auc
+from sklearn.metrics import roc_curve, auc, confusion_matrix, accuracy_score, precision_score, recall_score, f1_score, classification_report
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.ensemble import ExtraTreesClassifier
@@ -15,7 +15,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 
 # constants
-RANDOM_STATE = 16
+RANDOM_STATE = 10
 
 
 def load_data():
@@ -293,6 +293,10 @@ def predict_knn(data):
     print('Optimal k for KNN calculated: ', optimal_k)
     print('KNN prediction model accuracy: ', accuracy)
 
+    # printing classification report
+    y_pred = knn.predict(x_test)
+    print_classification_report(y_test, y_pred)
+
 
 def calculate_optimal_k(x_train, y_train):
     """
@@ -377,7 +381,7 @@ def predict_log_regression(data):
     classifier.fit(x_train, y_train)
 
     # calculating k-fold cross validation score
-    cross_val_accuracy = cross_validation_score(x_train, y_train, classifier)
+    cross_val_accuracy = cross_validation_score(x_train, y_train, LogisticRegression(multi_class='ovr'))
     print('Cross validation mean accuracy: ', cross_val_accuracy)
 
     # printing accuracy of the model
@@ -388,6 +392,10 @@ def predict_log_regression(data):
         plot_roc(x_test, y_test, classifier)    # two class roc plotting
     else:
         plot_roc_multiclass(x_test, y_test, classifier, classifier.classes_)    # multiclass ROC plotting
+
+    # printing classification report
+    y_pred = classifier.predict(x_test)
+    print_classification_report(y_test, y_pred)
 
 
 def plot_roc(x_test, y_test, classifier):
@@ -487,11 +495,15 @@ def predict_decision_tree(data):
     classifier.fit(x_train, y_train)
 
     # calculating k-fold cross validation score
-    cross_val_accuracy = cross_validation_score(x_train, y_train, classifier)
+    cross_val_accuracy = cross_validation_score(x_train, y_train, DecisionTreeClassifier(max_depth=3))
     print('Cross validation mean accuracy: ', cross_val_accuracy)
 
     # printing accuracy of the model on test data
     print(classifier.score(x_test, y_test))
+
+    # printing classification report
+    y_pred = classifier.predict(x_test)
+    print_classification_report(y_test, y_pred)
 
 
 def cross_validation_score(x_train, y_train, classifier, num_splits=4):
@@ -524,6 +536,38 @@ def cross_validation_score(x_train, y_train, classifier, num_splits=4):
 
     # our accuracy is the mean value of k-fold scores
     return np.mean(accuracies)
+
+
+def print_classification_report(y_test, y_pred):
+    """
+    Print classification report for the classifiers prediction
+    :param y_test: real y values
+    :param y_pred: predicted y values
+    """
+
+    # printing confusion matrix
+    confusion = confusion_matrix(y_test, y_pred)
+    print('Confusion Matrix\n')
+    print(confusion)
+
+    # printing accuracy_score, precision_score, recall_score, f1_score
+    print('\nAccuracy: {:.2f}\n'.format(accuracy_score(y_test, y_pred)))
+
+    print('Micro Precision: {:.2f}'.format(precision_score(y_test, y_pred, average='micro')))
+    print('Micro Recall: {:.2f}'.format(recall_score(y_test, y_pred, average='micro')))
+    print('Micro F1-score: {:.2f}\n'.format(f1_score(y_test, y_pred, average='micro')))
+
+    print('Macro Precision: {:.2f}'.format(precision_score(y_test, y_pred, average='macro')))
+    print('Macro Recall: {:.2f}'.format(recall_score(y_test, y_pred, average='macro')))
+    print('Macro F1-score: {:.2f}\n'.format(f1_score(y_test, y_pred, average='macro')))
+
+    print('Weighted Precision: {:.2f}'.format(precision_score(y_test, y_pred, average='weighted')))
+    print('Weighted Recall: {:.2f}'.format(recall_score(y_test, y_pred, average='weighted')))
+    print('Weighted F1-score: {:.2f}'.format(f1_score(y_test, y_pred, average='weighted')))
+
+    # together
+    print('\nClassification Report\n')
+    print(classification_report(y_test, y_pred))
 
 
 if __name__ == '__main__':

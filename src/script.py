@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import scipy.cluster.hierarchy as shc
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.metrics import roc_curve, auc, confusion_matrix, accuracy_score, precision_score, recall_score, f1_score, classification_report
+from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.ensemble import ExtraTreesClassifier, RandomForestClassifier
@@ -537,6 +538,37 @@ def predict_random_forest(data):
     print_classification_report(y_test, y_pred)
 
 
+def predict_multilayer_perceptron(data):
+    """
+    Training and predicting with random forest
+
+    :param data: all data from the dataset
+    """
+    # separating the features from the target value
+    x_data = data.iloc[:, 0:-1].values
+    target = data.iloc[:, -1].values
+
+    # standardizing features
+    x = StandardScaler().fit_transform(x_data)
+
+    # splitting data into train and test sets
+    x_train, x_test, y_train, y_test = train_test_split(x, target, random_state=RANDOM_STATE, test_size=0.2, shuffle=True)
+
+    classifier = MLPClassifier(solver='lbfgs', max_iter=300, random_state=RANDOM_STATE)
+    classifier.fit(x_train, y_train)
+
+    # calculating k-fold cross validation score
+    cross_val_accuracy = cross_validation_score(x_train, y_train, MLPClassifier(solver='lbfgs', max_iter=300, random_state=RANDOM_STATE))
+    print('Cross validation mean accuracy: ', cross_val_accuracy)
+
+    # printing accuracy of the model on test data
+    print(classifier.score(x_test, y_test))
+
+    # printing classification report
+    y_pred = classifier.predict(x_test)
+    print_classification_report(y_test, y_pred)
+
+
 def cross_validation_score(x_train, y_train, classifier, num_splits=4):
     """
     Calculate k-fold cross validation on train data
@@ -627,7 +659,8 @@ if __name__ == '__main__':
     calculate_features_importance(data_3c)
 
     # PREDICTION
-    predict_knn(data_3c)                # K-nearest neighbours prediction
-    predict_log_regression(data_3c)     # logistic regression prediction
-    predict_decision_tree(data_3c)      # decision tree prediction
-    predict_random_forest(data_3c)      # random forest prediction
+    predict_knn(data_3c)                    # K-nearest neighbours prediction
+    predict_log_regression(data_3c)         # logistic regression prediction
+    predict_decision_tree(data_3c)          # decision tree prediction
+    predict_random_forest(data_3c)          # random forest prediction
+    predict_multilayer_perceptron(data_3c)  # neural network prediction

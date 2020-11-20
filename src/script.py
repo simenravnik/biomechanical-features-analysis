@@ -491,11 +491,11 @@ def predict_decision_tree(data):
     # splitting data into train and test sets
     x_train, x_test, y_train, y_test = train_test_split(x, target, random_state=RANDOM_STATE, test_size=0.2, shuffle=True)
 
-    classifier = DecisionTreeClassifier(max_depth=3)
+    classifier = DecisionTreeClassifier(max_depth=3, random_state=RANDOM_STATE)
     classifier.fit(x_train, y_train)
 
     # calculating k-fold cross validation score
-    cross_val_accuracy = cross_validation_score(x_train, y_train, DecisionTreeClassifier(max_depth=3))
+    cross_val_accuracy = cross_validation_score(x_train, y_train, DecisionTreeClassifier(max_depth=3, random_state=RANDOM_STATE))
     print('Cross validation mean accuracy: ', cross_val_accuracy)
 
     # printing accuracy of the model on test data
@@ -551,23 +551,23 @@ def print_classification_report(y_test, y_pred):
     print(confusion)
 
     # printing accuracy_score, precision_score, recall_score, f1_score
-    print('\nAccuracy: {:.2f}\n'.format(accuracy_score(y_test, y_pred)))
+    print('\nAccuracy: {:.4f}\n'.format(accuracy_score(y_test, y_pred)))
 
-    print('Micro Precision: {:.2f}'.format(precision_score(y_test, y_pred, average='micro')))
-    print('Micro Recall: {:.2f}'.format(recall_score(y_test, y_pred, average='micro')))
-    print('Micro F1-score: {:.2f}\n'.format(f1_score(y_test, y_pred, average='micro')))
+    print('Micro Precision: {:.4f}'.format(precision_score(y_test, y_pred, average='micro')))
+    print('Micro Recall: {:.4f}'.format(recall_score(y_test, y_pred, average='micro')))
+    print('Micro F1-score: {:.4f}\n'.format(f1_score(y_test, y_pred, average='micro')))
 
-    print('Macro Precision: {:.2f}'.format(precision_score(y_test, y_pred, average='macro')))
-    print('Macro Recall: {:.2f}'.format(recall_score(y_test, y_pred, average='macro')))
-    print('Macro F1-score: {:.2f}\n'.format(f1_score(y_test, y_pred, average='macro')))
+    print('Macro Precision: {:.4f}'.format(precision_score(y_test, y_pred, average='macro')))
+    print('Macro Recall: {:.4f}'.format(recall_score(y_test, y_pred, average='macro')))
+    print('Macro F1-score: {:.4f}\n'.format(f1_score(y_test, y_pred, average='macro')))
 
-    print('Weighted Precision: {:.2f}'.format(precision_score(y_test, y_pred, average='weighted')))
-    print('Weighted Recall: {:.2f}'.format(recall_score(y_test, y_pred, average='weighted')))
-    print('Weighted F1-score: {:.2f}'.format(f1_score(y_test, y_pred, average='weighted')))
+    print('Weighted Precision: {:.4f}'.format(precision_score(y_test, y_pred, average='weighted')))
+    print('Weighted Recall: {:.4f}'.format(recall_score(y_test, y_pred, average='weighted')))
+    print('Weighted F1-score: {:.4f}'.format(f1_score(y_test, y_pred, average='weighted')))
 
     # together
     print('\nClassification Report\n')
-    print(classification_report(y_test, y_pred))
+    print(classification_report(y_test, y_pred, digits=4))
 
 
 if __name__ == '__main__':

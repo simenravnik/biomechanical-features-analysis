@@ -61,6 +61,47 @@ def class_count_plot(data_2c, data_3c):
     plt.show()
 
 
+def univariate_analysis(data):
+    """
+    Statistics of each variable by itself
+
+    :param data: all data
+    """
+    print('Data types:')
+    print(data.dtypes)
+
+    print('Shape:')
+    print(data.shape)
+
+    print('Describe:')
+    print(data.describe())
+
+    print('Missing values:')
+    print(data.apply(lambda x: sum(x.isnull()), axis=0))
+
+    # plotting class count
+    class_count_plot(data_2c, data_3c)
+
+    # plotting distribution for each column in dataset
+    for column in data_2c.drop('class', axis=1):
+        column_distribution(data_2c[column])
+
+
+def remove_outliers(df):
+    """
+    Remove values that are more than three std deviations away from the mean
+
+    :param df: all data as pandas data frame
+    """
+    outliers = {}
+    for col in df.columns:
+        if str(df[col].dtype) != 'object':
+            df = df[np.abs(df[col] - df[col].mean()) < (3 * df[col].std())]
+            olrs = df[~(np.abs(df[col] - df[col].mean()) < (3 * df[col].std()))]
+            outliers = pd.DataFrame(olrs)
+    return df, outliers
+
+
 def hierarchical_clustering(data_3c):
 
     # convert pandas data frame to numpy array
@@ -637,14 +678,12 @@ if __name__ == '__main__':
     # load data
     data_2c, data_3c = load_data()
 
-    print(data_3c.describe())
+    # univariate analysis
+    univariate_analysis(data_3c)
 
-    # plotting class count
-    class_count_plot(data_2c, data_3c)
-
-    # plotting distribution for each column in dataset
-    for column in data_2c.drop('class', axis=1):
-        column_distribution(data_2c[column])
+    # removing outliers from the dataset
+    data_3c, _ = remove_outliers(data_3c)
+    data_2c, _ = remove_outliers(data_2c)
 
     # plotting pairwise relationships
     pairwise_relationship(data_3c)

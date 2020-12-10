@@ -261,17 +261,17 @@ if __name__ == '__main__':
     data, _ = remove_outliers(data_3c)
 
     # PREDICTION
-    # print("\nKNN:")
-    # predict(data, knn)                       # K-nearest neighbours prediction
-    #
-    # print("\nDecision tree:")
-    # predict(data, decision_tree)             # decision tree prediction
+    print("\nKNN:")
+    predict(data, knn)                       # K-nearest neighbours prediction
+
+    print("\nDecision tree:")
+    predict(data, decision_tree)             # decision tree prediction
 
     print("\nLogistic regression:")
     predict(data, log_regression)            # logistic regression prediction
 
-    # print("\nRandom forest:")
-    # predict(data, random_forest)             # random forest prediction
+    print("\nRandom forest:")
+    predict(data, random_forest)             # random forest prediction
 
-    # print("\nMultilayer perceptron:")
-    # predict(data, multilayer_perceptron)     # neural network prediction
+    print("\nMultilayer perceptron:")
+    predict(data, multilayer_perceptron)     # neural network prediction

@@ -1,8 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.metrics import roc_curve, auc, classification_report, recall_score, accuracy_score, confusion_matrix
+import pandas as pd
+from sklearn.metrics import roc_curve, auc, recall_score, confusion_matrix
 from sklearn.model_selection import KFold
 from sklearn.neighbors import KNeighborsClassifier
+import scipy.stats as st
 
 
 def cross_validation_score(x_train, y_train, classifier, num_splits=4):
@@ -181,7 +183,7 @@ def plot_roc_multiclass(x_test, y_test, classifier, classes):
     plt.show()
 
 
-def print_classification_report(y_test, y_pred):
+def get_classification_report(y_test, y_pred):
     """
     Print classification report for the classifiers prediction
     :param y_test: real y values
@@ -192,38 +194,22 @@ def print_classification_report(y_test, y_pred):
 
     # printing confusion matrix
     confusion = confusion_matrix(y_test, y_pred, labels=classes)
-    print('Confusion Matrix\n')
-    print(confusion)
-
-    # printing accuracy_score, precision_score, recall_score, f1_score
-    print('\nAccuracy: {:.4f}\n'.format(accuracy_score(y_test, y_pred)))
 
     sensitivity = recall_score(y_test, y_pred, labels=classes, average=None)
     specificity = specificity_score(confusion, classes)
 
-    for i in range(len(sensitivity)):
-        print("Sensitivity " + classes[i] + ": " + str(sensitivity[i]))
-        print("Specificity " + classes[i] + ": " + str(specificity[i]) + "\n")
+    df = pd.DataFrame([sensitivity, specificity], index=['Sensitivity', 'Specificity'], columns=classes)
 
-    # print('Micro Precision: {:.4f}'.format(precision_score(y_test, y_pred, average='micro')))
-    # print('Micro Recall: {:.4f}'.format(recall_score(y_test, y_pred, average='micro')))
-    # print('Micro F1-score: {:.4f}\n'.format(f1_score(y_test, y_pred, average='micro')))
-    #
-    # print('Macro Precision: {:.4f}'.format(precision_score(y_test, y_pred, average='macro')))
-    # print('Macro Recall: {:.4f}'.format(recall_score(y_test, y_pred, average='macro')))
-    # print('Macro F1-score: {:.4f}\n'.format(f1_score(y_test, y_pred, average='macro')))
-    #
-    # print('Weighted Precision: {:.4f}'.format(precision_score(y_test, y_pred, average='weighted')))
-    # print('Weighted Recall: {:.4f}'.format(recall_score(y_test, y_pred, average='weighted')))
-    # print('Weighted F1-score: {:.4f}'.format(f1_score(y_test, y_pred, average='weighted')))
-    #
-    # # together
-    print('\nClassification Report\n')
-    print(classification_report(y_test, y_pred, digits=4))
+    return df
 
 
 def specificity_score(confusion, classes):
-
+    """
+    Function for calculating sensitivity from confusion matrix
+    :param confusion: confusion matrix (2D array)
+    :param classes: array of unique class variables
+    :return:
+    """
     specificity = []
     for i in range(len(classes)):
         N = 0
@@ -238,3 +224,35 @@ def specificity_score(confusion, classes):
 
         specificity.append(TN / N)
     return specificity
+
+
+def calculate_confidence_intervals(sensitivity_hernia_arr, specificity_hernia_arr, sensitivity_spondylolisthesis_arr,
+                                   specificity_spondylolisthesis_arr):
+    """
+    function for calculating confidence intervals for sensitivity and specificity of hernia and spondylolisthesis
+    :param sensitivity_hernia_arr: Hernia measurements sensitivity array
+    :param specificity_hernia_arr: Hernia measurements specificity array
+    :param sensitivity_spondylolisthesis_arr: Spondylolisthesis measurements sensitivity array
+    :param specificity_spondylolisthesis_arr: Spondylolisthesis measurements specificity array
+    :return:
+    """
+    # dictionary for storing confidence intervals of each value
+    diagnosis_conf_dict = {}
+
+    # calculating confidence intervals
+
+    diagnosis_conf_dict["sensitivity_hernia_conf"] = st.norm.interval(alpha=0.95,
+                                               loc=np.mean(sensitivity_hernia_arr),
+                                               scale=st.sem(sensitivity_hernia_arr))
+    diagnosis_conf_dict["specificity_hernia_conf"] = st.norm.interval(alpha=0.95,
+                                               loc=np.mean(specificity_hernia_arr),
+                                               scale=st.sem(specificity_hernia_arr))
+
+    diagnosis_conf_dict["sensitivity_spondylolisthesis_conf"] = st.norm.interval(alpha=0.95,
+                                               loc=np.mean(sensitivity_spondylolisthesis_arr),
+                                               scale=st.sem(sensitivity_spondylolisthesis_arr))
+    diagnosis_conf_dict["specificity_spondylolisthesis_conf"] = st.norm.interval(alpha=0.95,
+                                               loc=np.mean(specificity_spondylolisthesis_arr),
+                                               scale=st.sem(specificity_spondylolisthesis_arr))
+
+    return diagnosis_conf_dict

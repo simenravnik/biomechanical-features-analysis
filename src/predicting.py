@@ -55,18 +55,34 @@ def predict(data, classifier):
     :param data: all data from the dataset
     :param classifier: wanted classifier for prediction
     """
+    # Lists for storing accuracy measurements
     accuracy_arr = []
     cross_val_arr = []
     f1_score_arr = []
+
+    # dictionary for storing sensitivities and specificities of Hernia and Spondylolisthesis
+    diagnosis_dict = {
+        "sensitivity_hernia_arr": [],
+        "specificity_hernia_arr": [],
+        "sensitivity_spondylolisthesis_arr": [],
+        "specificity_spondylolisthesis_arr": []
+    }
+
     # we run algorithm n times to get distribution of accuracies of certain classifier
     for i in range(100):
         # predicting with wanted classifier
-        accuracy, cross_val_accuracy, f1 = classifier(data)
+        accuracy, cross_val_accuracy, f1, current_diagnosis = classifier(data)
 
         # appending calculated accuracy and cross validation accuracy to list of accuracies and cross val scores
         accuracy_arr.append(accuracy)
         cross_val_arr.append(cross_val_accuracy)
         f1_score_arr.append(f1)
+
+        # appending calculated sensitivity and specificity to diagnosis dictionary
+        diagnosis_dict["sensitivity_hernia_arr"].append(current_diagnosis["sensitivity_hernia"])
+        diagnosis_dict["specificity_hernia_arr"].append(current_diagnosis["specificity_hernia"])
+        diagnosis_dict["sensitivity_spondylolisthesis_arr"].append(current_diagnosis["sensitivity_spondylolisthesis"])
+        diagnosis_dict["specificity_spondylolisthesis_arr"].append(current_diagnosis["specificity_spondylolisthesis"])
 
     # plotting distributions of accuracies and cross val scores
     plot_distribution(accuracy_arr)
@@ -76,6 +92,22 @@ def predict(data, classifier):
     print("Average accuracy = ", statistics.mean(accuracy_arr))
     print("Average cross validation accuracy = ", statistics.mean(cross_val_arr))
     print("F1 score (micro) = ", statistics.mean(f1_score_arr))
+
+    # calculating confidence intervals for sensitivity and specificity
+    diagnosis_conf_dict = helper.calculate_confidence_intervals(
+        diagnosis_dict["sensitivity_hernia_arr"],
+        diagnosis_dict["specificity_hernia_arr"],
+        diagnosis_dict["sensitivity_spondylolisthesis_arr"],
+        diagnosis_dict["specificity_spondylolisthesis_arr"]
+    )
+
+    print("\nHernia diagnosis sensitivity confidence interval: ", diagnosis_conf_dict["sensitivity_hernia_conf"])
+    print("Hernia diagnosis specificity confidence interval: ", diagnosis_conf_dict["specificity_hernia_conf"])
+
+    print("\nSpondylolisthesis diagnosis sensitivity confidence interval: ",
+          diagnosis_conf_dict["sensitivity_spondylolisthesis_conf"])
+    print("Spondylolisthesis diagnosis specificity confidence interval: ",
+          diagnosis_conf_dict["specificity_spondylolisthesis_conf"])
 
 
 def knn(data):
@@ -116,7 +148,17 @@ def knn(data):
     y_pred = classifier.predict(x_test)
     f1 = f1_score(y_test, y_pred, average='micro')
 
-    return accuracy, cross_val_accuracy, f1
+    # calculating sensitivity and specificity of current result
+    df = helper.get_classification_report(y_test, y_pred)
+    # dictionary for storing current sensitivity and specificity results
+    diagnosis = {
+        "sensitivity_hernia": df['Hernia']['Sensitivity'],
+        "specificity_hernia": df['Hernia']['Specificity'],
+        "sensitivity_spondylolisthesis": df['Spondylolisthesis']['Sensitivity'],
+        "specificity_spondylolisthesis": df['Spondylolisthesis']['Specificity']
+    }
+
+    return accuracy, cross_val_accuracy, f1, diagnosis
 
 
 def decision_tree(data):
@@ -148,7 +190,17 @@ def decision_tree(data):
     y_pred = classifier.predict(x_test)
     f1 = f1_score(y_test, y_pred, average='micro')
 
-    return accuracy, cross_val_accuracy, f1
+    # calculating sensitivity and specificity of current result
+    df = helper.get_classification_report(y_test, y_pred)
+    # dictionary for storing current sensitivity and specificity results
+    diagnosis = {
+        "sensitivity_hernia": df['Hernia']['Sensitivity'],
+        "specificity_hernia": df['Hernia']['Specificity'],
+        "sensitivity_spondylolisthesis": df['Spondylolisthesis']['Sensitivity'],
+        "specificity_spondylolisthesis": df['Spondylolisthesis']['Specificity']
+    }
+
+    return accuracy, cross_val_accuracy, f1, diagnosis
 
 
 def log_regression(data):
@@ -186,7 +238,17 @@ def log_regression(data):
     y_pred = classifier.predict(x_test)
     f1 = f1_score(y_test, y_pred, average='micro')
 
-    return accuracy, cross_val_accuracy, f1
+    # calculating sensitivity and specificity of current result
+    df = helper.get_classification_report(y_test, y_pred)
+    # dictionary for storing current sensitivity and specificity results
+    diagnosis = {
+        "sensitivity_hernia": df['Hernia']['Sensitivity'],
+        "specificity_hernia": df['Hernia']['Specificity'],
+        "sensitivity_spondylolisthesis": df['Spondylolisthesis']['Sensitivity'],
+        "specificity_spondylolisthesis": df['Spondylolisthesis']['Specificity']
+    }
+
+    return accuracy, cross_val_accuracy, f1, diagnosis
 
 
 def random_forest(data):
@@ -218,7 +280,17 @@ def random_forest(data):
     y_pred = classifier.predict(x_test)
     f1 = f1_score(y_test, y_pred, average='micro')
 
-    return accuracy, cross_val_accuracy, f1
+    # calculating sensitivity and specificity of current result
+    df = helper.get_classification_report(y_test, y_pred)
+    # dictionary for storing current sensitivity and specificity results
+    diagnosis = {
+        "sensitivity_hernia": df['Hernia']['Sensitivity'],
+        "specificity_hernia": df['Hernia']['Specificity'],
+        "sensitivity_spondylolisthesis": df['Spondylolisthesis']['Sensitivity'],
+        "specificity_spondylolisthesis": df['Spondylolisthesis']['Specificity']
+    }
+
+    return accuracy, cross_val_accuracy, f1, diagnosis
 
 
 def multilayer_perceptron(data):
@@ -250,7 +322,17 @@ def multilayer_perceptron(data):
     y_pred = classifier.predict(x_test)
     f1 = f1_score(y_test, y_pred, average='micro')
 
-    return accuracy, cross_val_accuracy, f1
+    # calculating sensitivity and specificity of current result
+    df = helper.get_classification_report(y_test, y_pred)
+    # dictionary for storing current sensitivity and specificity results
+    diagnosis = {
+        "sensitivity_hernia": df['Hernia']['Sensitivity'],
+        "specificity_hernia": df['Hernia']['Specificity'],
+        "sensitivity_spondylolisthesis": df['Spondylolisthesis']['Sensitivity'],
+        "specificity_spondylolisthesis": df['Spondylolisthesis']['Specificity']
+    }
+
+    return accuracy, cross_val_accuracy, f1, diagnosis
 
 
 if __name__ == '__main__':

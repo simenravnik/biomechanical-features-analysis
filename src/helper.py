@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.metrics import roc_curve, auc, recall_score, confusion_matrix
-from sklearn.model_selection import KFold
+from sklearn.model_selection import StratifiedKFold
 from sklearn.neighbors import KNeighborsClassifier
 import scipy.stats as st
 
@@ -20,8 +20,8 @@ def cross_validation_score(x_train, y_train, classifier, num_splits=4):
     # storing all K-fold accuracies of k
     accuracies = []
     # splitting train data again into K sets to perform cross validation
-    k_fold = KFold(n_splits=num_splits)
-    for train_index, test_index in k_fold.split(x_train):
+    k_fold = StratifiedKFold(n_splits=num_splits, shuffle=True)
+    for train_index, test_index in k_fold.split(x_train, y_train):
         # K-fold train and test data set
         kf_x_train, kf_x_test = x_train[train_index], x_train[test_index]
         kf_y_train, kf_y_test = y_train[train_index], y_train[test_index]
@@ -51,18 +51,19 @@ def calculate_optimal_k(x_train, y_train):
     all_accuracies = []
     all_train_accuracies = []
 
-    for k in range(1, 51):
-
-        # defining prediction model with k nearest neighbours
-        knn = KNeighborsClassifier(n_neighbors=k)
+    for k in range(2, 51):
 
         # storing all K-fold accuracies of k
         k_accuracies = []
         train_accuracies = []
 
         # splitting train data again into K sets to perform cross validation
-        k_fold = KFold(n_splits=4)
-        for train_index, test_index in k_fold.split(x_train):
+        k_fold = StratifiedKFold(n_splits=5, shuffle=True)
+        for train_index, test_index in k_fold.split(x_train, y_train):
+
+            # defining prediction model with k nearest neighbours
+            knn = KNeighborsClassifier(n_neighbors=k)
+
             # K-fold train and test data set
             kf_x_train, kf_x_test = x_train[train_index], x_train[test_index]
             kf_y_train, kf_y_test = y_train[train_index], y_train[test_index]
@@ -83,7 +84,7 @@ def calculate_optimal_k(x_train, y_train):
         all_train_accuracies.append(np.mean(train_accuracies))
 
     # plotting knn accuracies depending on k chart
-    # plot_knn_chart(all_accuracies, all_train_accuracies)
+    plot_knn_chart(all_accuracies, all_train_accuracies)
 
     # transforming list into numpy array
     all_accuracies = np.array(all_accuracies)
@@ -97,14 +98,15 @@ def calculate_optimal_k(x_train, y_train):
 def plot_knn_chart(all_accuracies, all_train_accuracies):
     # plotting accuracy depending on k number
     plt.figure(figsize=[16, 9])
-    plt.plot(np.arange(1, 51), all_accuracies, label="Testing accuracy")
-    plt.plot(np.arange(1, 51), all_train_accuracies, label="Training accuracy")
-    plt.xticks(np.arange(1, 51))
+    plt.plot(np.arange(1, len(all_accuracies)+1), all_accuracies, label="Testing accuracy")
+    plt.plot(np.arange(1, len(all_train_accuracies)+1), all_train_accuracies, label="Training accuracy")
+    plt.xticks(np.arange(1, len(all_accuracies)+1))
     plt.legend()
     plt.title('KNN accuracy depending on number of neighbours')
     plt.xlabel('Number of Neighbors')
     plt.ylabel('Accuracy')
     # plt.savefig('../img/generated/knn.png', format='png', bbox_inches='tight')
+    plt.show()
 
 
 def plot_roc(x_test, y_test, classifier):
@@ -129,18 +131,15 @@ def plot_roc(x_test, y_test, classifier):
     plt.show()
 
 
-def plot_roc_multiclass(x_test, y_test, classifier, classes):
+def plot_roc_multiclass(y_score, y_test, classes):
     """
     Plot multiclass ROC curve and calculate AUC for each class
 
-    :param x_test: testing data
+    :param y_score: predicted data
     :param y_test: testing target array
     :param classifier: logistic regression classifier
     :param classes: unique classes of target array
     """
-
-    # predict confidence scores for each class
-    y_score = classifier.decision_function(x_test)
 
     # Compute ROC curve and ROC area for each class
     fpr = dict()
@@ -167,9 +166,29 @@ def plot_roc_multiclass(x_test, y_test, classifier, classes):
     fpr["micro"], tpr["micro"], _ = roc_curve(binary_y_test.ravel(order='F'), y_score.ravel())
     roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
 
+    # First aggregate all false positive rates
+    all_fpr = np.unique(np.concatenate([fpr[i] for i in range(len(classes))]))
+
+    # Then interpolate all ROC curves at this points
+    mean_tpr = np.zeros_like(all_fpr)
+    for i in range(len(classes)):
+        mean_tpr += np.interp(all_fpr, fpr[i], tpr[i])
+
+    # Finally average it and compute AUC
+    mean_tpr /= len(classes)
+
+    fpr["macro"] = all_fpr
+    tpr["macro"] = mean_tpr
+    roc_auc["macro"] = auc(fpr["macro"], tpr["macro"])
+
     # plot ROC curve
     plt.figure()
     plt.plot(fpr["micro"], tpr["micro"], label='micro-average ROC curve (area = {0:0.2f})'.format(roc_auc["micro"]))
+
+    plt.plot(fpr["macro"], tpr["macro"],
+             label='macro-average ROC curve (area = {0:0.2f})'
+                   ''.format(roc_auc["macro"]),
+             color='navy', linestyle=':', linewidth=2)
 
     for idx, i in enumerate(classes):
         plt.plot(fpr[idx], tpr[idx], label='ROC curve of class {0} (area = {1:0.2f})'.format(i, roc_auc[idx]))
@@ -177,8 +196,8 @@ def plot_roc_multiclass(x_test, y_test, classifier, classes):
     plt.plot([0, 1], [0, 1], 'k--')
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
-    plt.xlabel('Specificity')
-    plt.ylabel('Sensitivity')
+    plt.xlabel('FPR (1 - specificity)')
+    plt.ylabel('TPR (sensitivity)')
     plt.legend(loc="lower right")
     plt.show()
 

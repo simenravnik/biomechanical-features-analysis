@@ -91,6 +91,8 @@ def predict_cross_validation(X, y, model, num_splits=10, name=None):
         # fitting k-fold train data into the model
         classifier.fit(x_train, y_train)
 
+        classes = classifier.classes_
+
         if name == 'logistic_regression':
             # predict confidence scores for each class if model is logistic regression
             y_score = classifier.decision_function(x_test)
@@ -98,7 +100,6 @@ def predict_cross_validation(X, y, model, num_splits=10, name=None):
             if y_scores is None:
                 y_scores = y_score
                 y_tests = y_test
-                classes = classifier.classes_
             else:
                 y_scores = np.concatenate((y_scores, y_score), axis=0)
                 y_tests = np.concatenate((y_tests, y_test), axis=0)
@@ -110,7 +111,7 @@ def predict_cross_validation(X, y, model, num_splits=10, name=None):
         f1 = f1_score(y_test, y_pred, average='macro')
 
         # calculating sensitivity and specificity of current result
-        df = helper.get_classification_report(y_test, y_pred)
+        df = helper.get_classification_report(y_test, y_pred, classes)
         # dictionary for storing current sensitivity and specificity results
         current_diagnosis = {
             "sensitivity_hernia": df['Hernia']['Sensitivity'],
@@ -137,14 +138,30 @@ def predict_cross_validation(X, y, model, num_splits=10, name=None):
     print("Average accuracy = ", np.mean(accuracies))
     print("F1 score (macro) = ", np.mean(f1_score_arr))
 
-    print("\nHernia sensitivity = ", np.mean(diagnosis_dict["sensitivity_hernia_arr"]))
-    print("Hernia specificity = ", np.mean(diagnosis_dict["specificity_hernia_arr"]))
+    # calculating confidence intervals for sensitivity and specificity
+    diagnosis_conf_dict = helper.calculate_confidence_intervals_t(
+        diagnosis_dict["sensitivity_hernia_arr"],
+        diagnosis_dict["specificity_hernia_arr"],
+        diagnosis_dict["sensitivity_normal_arr"],
+        diagnosis_dict["specificity_normal_arr"],
+        diagnosis_dict["sensitivity_spondylolisthesis_arr"],
+        diagnosis_dict["specificity_spondylolisthesis_arr"]
+    )
 
-    print("\nNormal sensitivity = ", np.mean(diagnosis_dict["sensitivity_normal_arr"]))
-    print("Normal specificity = ", np.mean(diagnosis_dict["specificity_normal_arr"]))
+    print("\nHernia sensitivity = ", np.mean(diagnosis_dict["sensitivity_hernia_arr"]),
+          "   (95%CI ", diagnosis_conf_dict["sensitivity_hernia_conf"], ")")
+    print("Hernia specificity = ", np.mean(diagnosis_dict["specificity_hernia_arr"]),
+          "   (95%CI ", diagnosis_conf_dict["specificity_hernia_conf"], ")")
 
-    print("\nSpondylolisthesis sensitivity = ", np.mean(diagnosis_dict["sensitivity_spondylolisthesis_arr"]))
-    print("Spondylolisthesis specificity = ", np.mean(diagnosis_dict["specificity_spondylolisthesis_arr"]))
+    print("\nNormal sensitivity = ", np.mean(diagnosis_dict["sensitivity_normal_arr"]),
+          "   (95%CI ", diagnosis_conf_dict["sensitivity_normal_conf"], ")")
+    print("Normal specificity = ", np.mean(diagnosis_dict["specificity_normal_arr"]),
+          "   (95%CI ", diagnosis_conf_dict["specificity_normal_conf"], ")")
+
+    print("\nSpondylolisthesis sensitivity = ", np.mean(diagnosis_dict["sensitivity_spondylolisthesis_arr"]),
+          "   (95%CI ", diagnosis_conf_dict["sensitivity_spondylolisthesis_conf"], ")")
+    print("Spondylolisthesis specificity = ", np.mean(diagnosis_dict["specificity_spondylolisthesis_arr"]),
+          "   (95%CI ", diagnosis_conf_dict["specificity_spondylolisthesis_conf"], ")")
 
     if name == 'logistic_regression':
         # plot roc if model is logistic regression
@@ -187,13 +204,14 @@ if __name__ == '__main__':
     y = data.iloc[:, -1].values
 
     # PREDICTION
-    # print("\nKNN:")
-    # predict_cross_validation(X, y, knn)                                 # knn
-    # print("\nDecision tree:")
-    # predict_cross_validation(X, y, decision_tree)                       # decision tree
+    print("\nKNN:")
+    predict_cross_validation(X, y, knn)                                 # knn
+    print("\nDecision tree:")
+    predict_cross_validation(X, y, decision_tree)                       # decision tree
     print("\nLogistic regression:")
     predict_cross_validation(X, y, logistic_regression_classifier, name="logistic_regression")  # logistic regression
     print("\nRandom forest:")
     predict_cross_validation(X, y, random_forest_classifier)            # random forest
-    # print("\nNeural network:")
-    # predict_cross_validation(X, y, neural_network)                      # neural network
+    print("\nNeural network:")
+    predict_cross_validation(X, y, neural_network)                      # neural network
+

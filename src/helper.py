@@ -60,7 +60,6 @@ def calculate_optimal_k(x_train, y_train):
         # splitting train data again into K sets to perform cross validation
         k_fold = StratifiedKFold(n_splits=5, shuffle=True)
         for train_index, test_index in k_fold.split(x_train, y_train):
-
             # defining prediction model with k nearest neighbours
             knn = KNeighborsClassifier(n_neighbors=k)
 
@@ -73,7 +72,7 @@ def calculate_optimal_k(x_train, y_train):
 
             # accuracy of current split
             accuracy = knn.score(kf_x_test, kf_y_test)
-            train_accuracy = knn.score(kf_x_train, kf_y_train)    # train accuracy
+            train_accuracy = knn.score(kf_x_train, kf_y_train)  # train accuracy
 
             # adding current split accuracy to accuracies of current k
             k_accuracies.append(accuracy)
@@ -90,7 +89,7 @@ def calculate_optimal_k(x_train, y_train):
     all_accuracies = np.array(all_accuracies)
 
     # the best k for KNN algorithm is the index of max mean accuracies
-    optimal_k = np.argmax(all_accuracies) + 1      # +1 because we dont start with zero
+    optimal_k = np.argmax(all_accuracies) + 1  # +1 because we dont start with zero
 
     return optimal_k
 
@@ -98,9 +97,9 @@ def calculate_optimal_k(x_train, y_train):
 def plot_knn_chart(all_accuracies, all_train_accuracies):
     # plotting accuracy depending on k number
     plt.figure(figsize=[16, 9])
-    plt.plot(np.arange(1, len(all_accuracies)+1), all_accuracies, label="Testing accuracy")
-    plt.plot(np.arange(1, len(all_train_accuracies)+1), all_train_accuracies, label="Training accuracy")
-    plt.xticks(np.arange(1, len(all_accuracies)+1))
+    plt.plot(np.arange(1, len(all_accuracies) + 1), all_accuracies, label="Testing accuracy")
+    plt.plot(np.arange(1, len(all_train_accuracies) + 1), all_train_accuracies, label="Training accuracy")
+    plt.xticks(np.arange(1, len(all_accuracies) + 1))
     plt.legend()
     plt.title('KNN accuracy depending on number of neighbours')
     plt.xlabel('Number of Neighbors')
@@ -202,14 +201,13 @@ def plot_roc_multiclass(y_score, y_test, classes):
     plt.show()
 
 
-def get_classification_report(y_test, y_pred):
+def get_classification_report(y_test, y_pred, classes):
     """
     Print classification report for the classifiers prediction
     :param y_test: real y values
     :param y_pred: predicted y values
+    :param classes: classification classes
     """
-
-    classes = ['Hernia', 'Normal', 'Spondylolisthesis']
 
     # printing confusion matrix
     confusion = confusion_matrix(y_test, y_pred, labels=classes)
@@ -273,5 +271,56 @@ def calculate_confidence_intervals(sensitivity_hernia_arr, specificity_hernia_ar
     diagnosis_conf_dict["specificity_spondylolisthesis_conf"] = st.norm.interval(alpha=0.95,
                                                loc=np.mean(specificity_spondylolisthesis_arr),
                                                scale=st.sem(specificity_spondylolisthesis_arr))
+
+    return diagnosis_conf_dict
+
+
+def calculate_confidence_intervals_t(sensitivity_hernia_arr,
+                                   specificity_hernia_arr,
+                                   sensitivity_normal_arr,
+                                   specificity_normal_arr,
+                                   sensitivity_spondylolisthesis_arr,
+                                   specificity_spondylolisthesis_arr):
+    """
+    function for calculating confidence intervals for sensitivity and specificity of hernia and spondylolisthesis
+    :param sensitivity_hernia_arr: Hernia measurements sensitivity array
+    :param specificity_hernia_arr: Hernia measurements specificity array
+    :param specificity_normal_arr: Normal measurements sensitivity array
+    :param sensitivity_normal_arr: Normal measurements specificity array
+    :param sensitivity_spondylolisthesis_arr: Spondylolisthesis measurements sensitivity array
+    :param specificity_spondylolisthesis_arr: Spondylolisthesis measurements specificity array
+    :return:
+    """
+    # dictionary for storing confidence intervals of each value
+    diagnosis_conf_dict = {}
+
+    # calculating confidence intervals
+
+    diagnosis_conf_dict["sensitivity_hernia_conf"] = st.t.interval(alpha=0.95, df=len(sensitivity_hernia_arr) - 1,
+                                                                   loc=np.mean(sensitivity_hernia_arr),
+                                                                   scale=st.sem(sensitivity_hernia_arr))
+    diagnosis_conf_dict["specificity_hernia_conf"] = st.t.interval(alpha=0.95, df=len(specificity_hernia_arr) - 1,
+                                                                   loc=np.mean(specificity_hernia_arr),
+                                                                   scale=st.sem(specificity_hernia_arr))
+
+    diagnosis_conf_dict["sensitivity_normal_conf"] = st.t.interval(alpha=0.95, df=len(sensitivity_normal_arr) - 1,
+                                                                   loc=np.mean(sensitivity_normal_arr),
+                                                                   scale=st.sem(sensitivity_normal_arr))
+    diagnosis_conf_dict["specificity_normal_conf"] = st.t.interval(alpha=0.95, df=len(specificity_normal_arr) - 1,
+                                                                   loc=np.mean(specificity_normal_arr),
+                                                                   scale=st.sem(specificity_normal_arr))
+
+    diagnosis_conf_dict["sensitivity_spondylolisthesis_conf"] = st.t.interval(alpha=0.95, df=len(
+        sensitivity_spondylolisthesis_arr) - 1,
+                                                                              loc=np.mean(
+                                                                                  sensitivity_spondylolisthesis_arr),
+                                                                              scale=st.sem(
+                                                                                  sensitivity_spondylolisthesis_arr))
+    diagnosis_conf_dict["specificity_spondylolisthesis_conf"] = st.t.interval(alpha=0.95, df=len(
+        specificity_spondylolisthesis_arr) - 1,
+                                                                              loc=np.mean(
+                                                                                  specificity_spondylolisthesis_arr),
+                                                                              scale=st.sem(
+                                                                                  specificity_spondylolisthesis_arr))
 
     return diagnosis_conf_dict

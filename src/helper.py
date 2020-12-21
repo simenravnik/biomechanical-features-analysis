@@ -108,16 +108,14 @@ def plot_knn_chart(all_accuracies, all_train_accuracies):
     plt.show()
 
 
-def plot_roc(x_test, y_test, classifier):
+def plot_roc(y_test, y_pred_prob):
     """
     Plot ROC curve and calculate AUC
 
-    :param x_test: testing data
+    :param y_pred_prob: probability to be class 1
     :param y_test: testing target array
-    :param classifier: logistic regression classifier
     """
 
-    y_pred_prob = classifier.predict_proba(x_test)[:, 1]
     fpr, tpr, threshold = roc_curve(y_test, y_pred_prob, pos_label='Normal')
 
     # Plot ROC curve
@@ -310,17 +308,18 @@ def calculate_confidence_intervals_t(sensitivity_hernia_arr,
                                                                    loc=np.mean(specificity_normal_arr),
                                                                    scale=st.sem(specificity_normal_arr))
 
-    diagnosis_conf_dict["sensitivity_spondylolisthesis_conf"] = st.t.interval(alpha=0.95, df=len(
-        sensitivity_spondylolisthesis_arr) - 1,
-                                                                              loc=np.mean(
-                                                                                  sensitivity_spondylolisthesis_arr),
-                                                                              scale=st.sem(
-                                                                                  sensitivity_spondylolisthesis_arr))
-    diagnosis_conf_dict["specificity_spondylolisthesis_conf"] = st.t.interval(alpha=0.95, df=len(
-        specificity_spondylolisthesis_arr) - 1,
-                                                                              loc=np.mean(
-                                                                                  specificity_spondylolisthesis_arr),
-                                                                              scale=st.sem(
-                                                                                  specificity_spondylolisthesis_arr))
+    if len(sensitivity_spondylolisthesis_arr) != 0:
+        diagnosis_conf_dict["sensitivity_spondylolisthesis_conf"] = st.t.interval(alpha=0.95, df=len(
+            sensitivity_spondylolisthesis_arr) - 1,
+                                                                                  loc=np.mean(
+                                                                                      sensitivity_spondylolisthesis_arr),
+                                                                                  scale=st.sem(
+                                                                                      sensitivity_spondylolisthesis_arr))
+        diagnosis_conf_dict["specificity_spondylolisthesis_conf"] = st.t.interval(alpha=0.95, df=len(
+            specificity_spondylolisthesis_arr) - 1,
+                                                                                  loc=np.mean(
+                                                                                      specificity_spondylolisthesis_arr),
+                                                                                  scale=st.sem(
+                                                                                      specificity_spondylolisthesis_arr))
 
     return diagnosis_conf_dict

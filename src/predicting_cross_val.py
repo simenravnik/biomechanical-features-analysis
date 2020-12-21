@@ -93,7 +93,25 @@ def predict_cross_validation(X, y, model, num_splits=10, name=None):
 
         classes = classifier.classes_
 
-        if name == 'logistic_regression':
+        # accuracy of current split
+        accuracy = classifier.score(x_test, y_test)
+        # predictions
+        y_pred = classifier.predict(x_test)
+
+        # update predictions if num of classes is 2, because of different threshold
+        if len(classifier.classes_) == 2:
+            # predict probabilities to be class 1 (Normal)
+            y_pred_prob = classifier.predict_proba(x_test)[:, 1]
+            y_pred = predict_with_threshold(y_pred_prob, 0.7, classes)
+
+            # add to global scores and test
+            if y_scores is None:
+                y_scores = y_pred_prob
+                y_tests = y_test
+            else:
+                y_scores = np.concatenate((y_scores, y_pred_prob), axis=0)
+                y_tests = np.concatenate((y_tests, y_test), axis=0)
+        elif name == 'logistic_regression':
             # predict confidence scores for each class if model is logistic regression
             y_score = classifier.decision_function(x_test)
 
@@ -104,10 +122,6 @@ def predict_cross_validation(X, y, model, num_splits=10, name=None):
                 y_scores = np.concatenate((y_scores, y_score), axis=0)
                 y_tests = np.concatenate((y_tests, y_test), axis=0)
 
-        # accuracy of current split
-        accuracy = classifier.score(x_test, y_test)
-        # f1 score
-        y_pred = classifier.predict(x_test)
         f1 = f1_score(y_test, y_pred, average='macro')
 
         # calculating sensitivity and specificity of current result
@@ -117,9 +131,7 @@ def predict_cross_validation(X, y, model, num_splits=10, name=None):
             "sensitivity_hernia": df['Hernia']['Sensitivity'],
             "specificity_hernia": df['Hernia']['Specificity'],
             "sensitivity_normal": df['Normal']['Sensitivity'],
-            "specificity_normal": df['Normal']['Specificity'],
-            "sensitivity_spondylolisthesis": df['Spondylolisthesis']['Sensitivity'],
-            "specificity_spondylolisthesis": df['Spondylolisthesis']['Specificity']
+            "specificity_normal": df['Normal']['Specificity']
         }
 
         # appending calculated sensitivity and specificity to diagnosis dictionary
@@ -127,8 +139,15 @@ def predict_cross_validation(X, y, model, num_splits=10, name=None):
         diagnosis_dict["specificity_hernia_arr"].append(current_diagnosis["specificity_hernia"])
         diagnosis_dict["sensitivity_normal_arr"].append(current_diagnosis["sensitivity_normal"])
         diagnosis_dict["specificity_normal_arr"].append(current_diagnosis["specificity_normal"])
-        diagnosis_dict["sensitivity_spondylolisthesis_arr"].append(current_diagnosis["sensitivity_spondylolisthesis"])
-        diagnosis_dict["specificity_spondylolisthesis_arr"].append(current_diagnosis["specificity_spondylolisthesis"])
+
+        # appending spondylolisthesis if we have 3 classes
+        if len(classifier.classes_) == 3:
+            current_diagnosis["sensitivity_spondylolisthesis"] = df['Spondylolisthesis']['Sensitivity']
+            current_diagnosis["specificity_spondylolisthesis"] = df['Spondylolisthesis']['Specificity']
+            diagnosis_dict["sensitivity_spondylolisthesis_arr"].append(
+                current_diagnosis["sensitivity_spondylolisthesis"])
+            diagnosis_dict["specificity_spondylolisthesis_arr"].append(
+                current_diagnosis["specificity_spondylolisthesis"])
 
         # adding current split accuracy to accuracies of current k
         accuracies.append(accuracy)
@@ -158,14 +177,23 @@ def predict_cross_validation(X, y, model, num_splits=10, name=None):
     print("Normal specificity = ", np.mean(diagnosis_dict["specificity_normal_arr"]),
           "   (95%CI ", diagnosis_conf_dict["specificity_normal_conf"], ")")
 
-    print("\nSpondylolisthesis sensitivity = ", np.mean(diagnosis_dict["sensitivity_spondylolisthesis_arr"]),
-          "   (95%CI ", diagnosis_conf_dict["sensitivity_spondylolisthesis_conf"], ")")
-    print("Spondylolisthesis specificity = ", np.mean(diagnosis_dict["specificity_spondylolisthesis_arr"]),
-          "   (95%CI ", diagnosis_conf_dict["specificity_spondylolisthesis_conf"], ")")
+    if len(classes) == 3:
+        print("\nSpondylolisthesis sensitivity = ", np.mean(diagnosis_dict["sensitivity_spondylolisthesis_arr"]),
+              "   (95%CI ", diagnosis_conf_dict["sensitivity_spondylolisthesis_conf"], ")")
+        print("Spondylolisthesis specificity = ", np.mean(diagnosis_dict["specificity_spondylolisthesis_arr"]),
+              "   (95%CI ", diagnosis_conf_dict["specificity_spondylolisthesis_conf"], ")")
 
-    if name == 'logistic_regression':
+    if len(classes) == 2:
+        # plot roc if we have two classes
+        helper.plot_roc(y_tests, y_scores)
+    elif name == 'logistic_regression':
         # plot roc if model is logistic regression
         helper.plot_roc_multiclass(y_scores, y_tests, classes)
+
+
+def predict_with_threshold(y_pred_prob, threshold, classes):
+    y_pred = list(map(lambda x: classes[1] if (x > threshold) else classes[0], y_pred_prob))
+    return y_pred
 
 
 def knn(X, y):
@@ -215,3 +243,12 @@ if __name__ == '__main__':
     print("\nNeural network:")
     predict_cross_validation(X, y, neural_network)                      # neural network
 
+    # PREDICTING WITHOUT SPONDYLOLISTHESIS
+    # remove Spondylolisthesis from data to run algorithm again
+    filtered_data = data[data['class'] != 'Spondylolisthesis']
+    # separating the features from the target value
+    filtered_X = filtered_data.iloc[:, 0:-1].values
+    filtered_y = filtered_data.iloc[:, -1].values
+
+    print("\nLogistic regression (without Spondylolisthesis):")
+    predict_cross_validation(filtered_X, filtered_y, logistic_regression_classifier)

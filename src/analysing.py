@@ -1,3 +1,5 @@
+import json
+from functools import reduce
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -92,7 +94,6 @@ def remove_outliers(df):
 
 
 def hierarchical_clustering(data_3c):
-
     # convert pandas data frame to numpy array
     data_matrix = data_3c.to_numpy()
 
@@ -100,28 +101,61 @@ def hierarchical_clustering(data_3c):
     data = data_matrix[:, 0:-1]
     class_column = data_3c.iloc[:, -1]
 
-    plt.figure(figsize=(30, 40))
-    plt.title('Hierarchical Clustering Dendrogram', fontsize=20)
-    plt.xlabel('distance', fontsize=12)
-
     # np array of target value
     labels_arr = np.array(list(class_column))
 
-    # plotting dendrogram of hierarchical clustering with ward linkage
-    shc.dendrogram(
-        shc.linkage(data, method='ward'),
-        labels=labels_arr,
-        leaf_font_size=6,
-        color_threshold=220,
-        orientation='left'
-    )
-    plt.savefig('../img/generated/hierarchical_clustering.png', format='png', bbox_inches='tight')
+    clusters = shc.linkage(data, method='ward')
 
-    # hierarchical clustering for plotting scatter plot
-    cluster = AgglomerativeClustering(n_clusters=7, affinity='euclidean', linkage='ward')
-    cluster.fit_predict(data)
-    plt.scatter(data[:, 1], data[:, 4], c=cluster.labels_, cmap='rainbow')
-    plt.show()
+    T = shc.to_tree(clusters, rd=False)
+    d3Dendro = dict(children=[], name="Root1")
+    add_node(T, d3Dendro)
+
+    label_tree(d3Dendro["children"][0], list(class_column), "Black")
+    # Output to JSON
+    json.dump(d3Dendro, open("d3-dendrogram.json", "w"), sort_keys=True, indent=4)
+
+
+# Create a nested dictionary from the ClusterNode's returned by SciPy
+def add_node(node, parent):
+    # First create the new node and append it to its parent's children
+    newNode = dict(node_id=node.id, distance=node.dist, children=[])
+    parent["children"].append(newNode)
+    parent["color"] = "Black"
+
+    # Recursively add the current node's children
+    if node.left:
+        add_node(node.left, newNode)
+    if node.right:
+        add_node(node.right, newNode)
+
+
+colors = ["#ff71ce", "#01cdfe", "#05ffa1", "#b967ff", "Magenta"]
+
+
+# Label each node with the names of each leaf in its subtree
+def label_tree(n, id2name, color):
+    # If the node is a leaf, then we have its name
+    if len(n["children"]) == 0:
+        leaf_name = id2name[n["node_id"]]
+        n["name"] = leaf_name
+        n["color"] = color
+
+    # If not, flatten all the leaves in the node's subtree
+    else:
+        # add color
+        new_color = color
+        if n["distance"] < 200:
+            if color != 'Black':
+                n["color"] = color
+            else:
+                new_color = colors.pop(0)
+        reduce(lambda ls, c: label_tree(c, id2name, new_color), n["children"], [])
+
+    # Delete the node id since we don't need it anymore and
+    # it makes for cleaner JSON
+    del n["node_id"]
+
+    return n
 
 
 def calculate_pca(data):
@@ -200,7 +234,7 @@ def plot_pca(n, pca_matrix, horizontal_angle=None, vertical_angle=None):
     ax.set_ylabel('PC2')
 
     # defining colors for each or the target values
-    targets = list(set(pca_matrix['class']))    # unique elements of class column
+    targets = list(set(pca_matrix['class']))  # unique elements of class column
     colors = ['r', 'g', 'b']
 
     # for each of the target values ilocate indexes and
@@ -297,7 +331,7 @@ if __name__ == '__main__':
     univariate_analysis(data_3c)
 
     # removing outliers from the dataset
-    data_3c, _ = remove_outliers(data_3c)
+    # data_3c, outliers = remove_outliers(data_3c)
     data_2c, _ = remove_outliers(data_2c)
 
     # plotting pairwise relationships

@@ -116,13 +116,15 @@ def plot_roc(y_test, y_pred_prob):
     :param y_test: testing target array
     """
 
-    fpr, tpr, threshold = roc_curve(y_test, y_pred_prob, pos_label='Normal')
+    tpr, fpr, threshold = roc_curve(y_test, y_pred_prob, pos_label='Hernia')
 
     # Plot ROC curve
     plt.plot([0, 1], [0, 1], 'k--')
     plt.plot(fpr, tpr, label='ROC curve (area = {0:0.2f})'.format(auc(fpr, tpr)))
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
+    # plt.plot(fpr[11], tpr[11], 'co', label="Threshold 0.5")
+    # plt.plot(fpr[26], tpr[26], 'mo', label="Threshold 0.7")
+    plt.xlabel('FPR (1 - specificity)')
+    plt.ylabel('TPR (sensitivity)')
     plt.title('Receiver operating characteristic')
     plt.legend(loc="lower right")
     plt.show()
